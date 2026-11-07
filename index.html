@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#faf9f6">
+<meta name="description" content="Nalar — asisten AI serbaguna yang berjalan di perangkat Anda.">
+<title>Nalar — Asisten AI</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar" aria-label="Navigasi">
+    <div class="side-top">
+      <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Nalar</span></div>
+      <button id="btnNew" class="primary wide" type="button">＋ Percakapan baru</button>
+      <input id="search" type="search" placeholder="Cari percakapan…" aria-label="Cari percakapan">
+      <nav class="modes">
+        <button data-mode="riset" type="button">🔎 Riset</button>
+        <button data-mode="menulis" type="button">✍️ Menulis</button>
+        <button data-mode="koding" type="button">💻 Koding</button>
+        <button data-mode="dokumen" type="button">📄 Dokumen</button>
+      </nav>
+    </div>
+    <div class="side-title">Riwayat</div>
+    <div id="history" class="history"></div>
+    <div class="side-bottom">
+      <button id="btnMemory" type="button">🧠 Memori</button>
+      <button id="btnSettings" type="button">⚙️ Pengaturan</button>
+      <button id="btnAbout" type="button">ℹ️ Tentang</button>
+    </div>
+  </aside>
+  <div id="scrim"></div>
+
+  <main>
+    <header>
+      <button id="btnMenu" class="icon" type="button" aria-label="Menu">☰</button>
+      <div id="chatTitle" class="title">Nalar</div>
+      <button id="modelChip" class="chip" type="button">Model: belum dimuat</button>
+    </header>
+
+    <section id="messages" aria-live="polite"></section>
+<template id="welcomeTpl">
+<div id="welcome">
+        <img src="icons/icon.svg" alt="" width="56" height="56">
+        <h1 id="greeting">Halo</h1>
+        <p>Saya Nalar, asisten AI yang berjalan sepenuhnya di perangkat Anda. Pilih mode atau langsung bertanya.</p>
+        <div class="shortcuts">
+          <button data-mode="umum" data-prompt="Jelaskan cara kerja fotosintesis dengan bahasa sederhana." type="button">💬 Tanya apa saja</button>
+          <button data-mode="riset" data-focus="1" type="button">🔎 Riset (Wikipedia)</button>
+          <button data-mode="menulis" data-focus="1" type="button">✍️ Menulis</button>
+          <button data-mode="koding" data-focus="1" type="button">💻 Koding</button>
+          <button data-mode="dokumen" data-attach="1" type="button">📄 Unggah dokumen</button>
+        </div>
+      </div>
+</template>
+
+    <footer id="composer">
+      <div id="docPill" class="pill" hidden><span id="docName"></span><button id="docRemove" type="button" aria-label="Lepas dokumen">✕</button></div>
+      <div class="modebar" id="modebar"></div>
+      <div class="inputrow">
+        <button id="btnAttach" class="icon" type="button" aria-label="Unggah berkas">📎</button>
+        <textarea id="input" rows="1" placeholder="Tulis pesan…" aria-label="Pesan"></textarea>
+        <button id="btnSend" class="send" type="button" aria-label="Kirim">➤</button>
+        <button id="btnStop" class="send stop" type="button" aria-label="Hentikan" hidden>■</button>
+      </div>
+      <input id="file" type="file" hidden accept=".txt,.md,.csv,.json,.html,.css,.js,.ts,.py,.java,.c,.cpp,.xml,.log,.pdf,text/*,application/pdf">
+      <div class="foot">Nalar bisa keliru. Periksa informasi penting.</div>
+    </footer>
+  </main>
+</div>
+
+<dialog id="dlgModel">
+  <form method="dialog" class="dlg">
+    <h2>Model AI</h2>
+    <p class="muted" id="gpuStatus">Memeriksa dukungan WebGPU…</p>
+    <div id="modelList" class="radios"></div>
+    <p class="muted small">Model diunduh sekali dari Hugging Face (butuh internet &amp; kuota sesuai ukuran), lalu disimpan di browser dan bisa dipakai offline. Ukuran adalah perkiraan.</p>
+    <div id="progressWrap" hidden><div class="bar"><div id="bar"></div></div><div id="progressText" class="muted small"></div></div>
+    <div class="row">
+      <button id="btnLoad" class="primary" type="button">Unduh &amp; muat model</button>
+      <button value="close">Tutup</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgSettings">
+  <form method="dialog" class="dlg">
+    <h2>Pengaturan</h2>
+    <label>Tema
+      <select id="setTheme"><option value="auto">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select>
+    </label>
+    <label>Bahasa jawaban AI
+      <select id="setLang"><option value="auto">Ikuti bahasa pengguna</option><option value="id">Indonesia</option><option value="en">English</option></select>
+    </label>
+    <label>Ukuran huruf
+      <select id="setFont"><option value="15">Kecil</option><option value="16">Normal</option><option value="18">Besar</option></select>
+    </label>
+    <label>Suhu jawaban: <b id="tempVal">0.5</b> <span class="muted small">(rendah = lebih konsisten)</span>
+      <input id="setTemp" type="range" min="0" max="1" step="0.1">
+    </label>
+    <label class="check"><input id="setWorker" type="checkbox"> Gunakan Web Worker (eksperimental; berlaku saat model dimuat ulang)</label>
+    <h3>Data &amp; privasi</h3>
+    <p class="muted small">Percakapan, memori, dan pengaturan disimpan hanya di browser perangkat ini (IndexedDB/localStorage). Tidak ada akun, tidak ada pelacakan. Koneksi keluar hanya terjadi untuk: mengunduh model &amp; pustaka (Hugging Face, jsDelivr, GitHub), mode Riset (Wikipedia), dan pembaca PDF/rumus (cdnjs/jsDelivr) saat dipakai.</p>
+    <div class="row wrap">
+      <button id="btnExport" type="button">Ekspor data (JSON)</button>
+      <button id="btnClearChats" type="button" class="danger">Hapus semua riwayat</button>
+      <button id="btnClearAll" type="button" class="danger">Hapus semua data</button>
+    </div>
+    <div class="row"><button value="close" class="primary">Selesai</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgMemory">
+  <form method="dialog" class="dlg">
+    <h2>Memori</h2>
+    <p class="muted small">Hanya berisi hal yang Anda simpan sendiri. Isinya disertakan ke AI pada setiap percakapan. Tidak ada yang disimpan otomatis.</p>
+    <div id="memList" class="memlist"></div>
+    <div class="inputrow">
+      <input id="memInput" type="text" placeholder="Contoh: Saya lebih suka jawaban singkat" maxlength="300">
+      <button id="memAdd" type="button" class="primary">Tambah</button>
+    </div>
+    <div class="row"><button id="memClear" type="button" class="danger">Hapus semua memori</button><button value="close">Tutup</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgAbout">
+  <form method="dialog" class="dlg">
+    <h2>Tentang Nalar</h2>
+    <p>Asisten AI serbaguna yang berjalan di browser Anda. Model bahasa open-source dijalankan lokal di GPU perangkat lewat WebGPU (WebLLM). Tanpa API berbayar, tanpa server.</p>
+    <p class="muted small">Versi aplikasi: <b id="ver"></b></p>
+    <p class="muted small"><b>Batasan jujur:</b> model kecil di HP jauh di bawah kemampuan model besar seperti Claude. Ia bisa keliru, lambat, dan punya konteks pendek. Mode Riset hanya mencari di Wikipedia, bukan seluruh web. Tidak ada OCR untuk PDF hasil pindai.</p>
+    <div class="row"><button value="close" class="primary">Tutup</button></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
